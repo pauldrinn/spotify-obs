@@ -2,7 +2,6 @@
 import type { Spotify } from "use-lanyard";
 
 import Image from "next/image";
-import SpotifyLogo from "@/components/spotify-logo";
 
 import { useEffect, useState } from "react";
 
@@ -63,7 +62,6 @@ const ExampleSong = ({ data, mouseX, mouseY }: SongProps) => {
           </div>
         </div>
       </div>
-      <SpotifyLogo className="absolute right-3 h-5 w-5 text-green-500" />
     </a>
   );
 };

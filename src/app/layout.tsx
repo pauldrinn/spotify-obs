@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 
 import { Toaster } from "@/components/ui/toaster";
+import MigrationBanner from "@/components/migration-banner";
 
 import { Inter } from "next/font/google";
 const inter = Inter({ subsets: ["latin"] });
@@ -33,6 +34,7 @@ export default function RootLayout({
         ></script>
       </head>
       <body className={`${inter.className}`}>
+        <MigrationBanner />
         {children}
         <Toaster />
       </body>
