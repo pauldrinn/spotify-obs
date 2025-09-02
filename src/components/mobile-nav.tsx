@@ -43,7 +43,7 @@ const MobileNav = () => {
                 width={20}
                 alt="vercel icon"
               />
-              <p className="font-semibold">spotify-obs</p>
+              <p className="font-semibold">OBS Music Widget</p>
             </div>
           </SheetHeader>
           <div className="mt-4 flex flex-col space-y-6">

@@ -286,7 +286,7 @@ function TextOnly({
 
 const BASE_URL = process.env.NEXT_PUBLIC_DEVELOPMENT
   ? "http://localhost:3000/"
-  : "https://spotify-obs.com/";
+  : "https://obsmusicwidget.vercel.app/";
 
 function Manager() {
   const [obsUrl, setObsUrl] = useState(BASE_URL);

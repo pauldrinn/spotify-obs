@@ -22,7 +22,7 @@ const Nav = () => {
               width={20}
               alt="vercel icon"
             />
-            <p className="font-bold">spotify-obs</p>
+            <p className="font-bold">OBS Music Widget</p>
           </Link>
 
           <div className="hidden space-x-6 md:flex">

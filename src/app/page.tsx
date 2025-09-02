@@ -108,7 +108,7 @@ export default function Home() {
                 <div className="flex w-full items-center">
                   <span className="w-14 text-right text-sm">URL</span>
                   <div className="ml-3 w-full rounded-md bg-gray-800 p-2">
-                    https://spotify-obs.com/
+                    https://obsmusicwidget.vercel.app/
                     <span className="font-semibold text-green-400">@@@</span>
                   </div>
                 </div>
