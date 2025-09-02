@@ -1,11 +1,13 @@
 import Nav from "@/components/nav";
 import Manager from "@/app/customize/manager";
 import TrackView from "@/components/track-view";
+import MigrationBanner from "@/components/migration-banner";
 
 export default function Customize() {
   return (
     <>
       <TrackView path="/customize" />
+      <MigrationBanner />
       <Nav />
       <main className="relative flex flex-col items-center overflow-x-clip">
         <div className="absolute -top-24 -z-10 flex h-[10rem] w-[40rem] items-center justify-center rounded-[50%] bg-[#6F32F0] blur-[100px]" />

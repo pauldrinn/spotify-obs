@@ -3,11 +3,13 @@ import Link from "next/link";
 import Nav from "@/components/nav";
 import HeroSection from "@/app/hero-section";
 import TrackView from "@/components/track-view";
+import MigrationBanner from "@/components/migration-banner";
 
 export default function Home() {
   return (
     <>
       <TrackView path="/" />
+      <MigrationBanner />
       <div className="bg-purple-dark">
         <Nav />
         <main className="relative flex flex-col items-center overflow-x-clip">
