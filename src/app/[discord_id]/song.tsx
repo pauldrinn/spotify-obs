@@ -8,10 +8,7 @@ import { useLanyardWS } from "use-lanyard";
 import { useThrottle } from "@/lib/throttle";
 import { useSearchParams } from "next/navigation";
 import { memo, useEffect, useState } from "react";
-import { FastAverageColor } from "fast-average-color";
 import { AnimatePresence, motion } from "framer-motion";
-
-const fac = new FastAverageColor();
 
 interface ProgressProps {
   start: number;
@@ -95,9 +92,11 @@ const Song = ({ discord_id }: SongProps) => {
   const music = getMusicActivity(data);
 
   useEffect(() => {
-    if (!music || !music.album_art_url) return;
-    if (opts.get("color") === "true" || opts.get("c") === "t") {
-      if (typeof window !== "undefined") {
+  if (!music || !music.album_art_url) return;
+  if (opts.get("color") === "true" || opts.get("c") === "t") {
+    if (typeof window !== "undefined") {
+      import("fast-average-color").then(({ FastAverageColor }) => {
+        const fac = new FastAverageColor();
         const img = new window.Image();
         img.crossOrigin = "anonymous";
         img.src = music.album_art_url;
@@ -111,9 +110,10 @@ const Song = ({ discord_id }: SongProps) => {
             setBorderColor(`rgba(${rgb} / 40%)`);
           });
         };
-      }
+      });
     }
-  }, [music, opts, music?.album_art_url]);
+  }
+}, [music, opts, music?.album_art_url]);
 
   if (!music) {
     return (
