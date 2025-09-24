@@ -59,23 +59,47 @@ interface SongProps {
 }
 
 const Song = ({ discord_id }: SongProps) => {
+
   const data = useThrottle(useLanyardWS(discord_id));
-
   const opts = useSearchParams();
-
   const [backgroundRGB, setBackgroundRGB] = useState("0 0 0");
   const [borderColor, setBorderColor] = useState("rgba(38 38 38 / 1)");
 
-  useEffect(() => {
-    if (!data || !data.spotify) return;
+  // Helper: extract the first available music activity (Spotify, Deezer, etc.)
+  function getMusic(data: any) {
+    if (!data) return null;
+    if (data.spotify) return { ...data.spotify, service: "Spotify" };
+    if (Array.isArray(data.activities)) {
+      const music = data.activities.find(
+        (a: any) => a.type === 2 && (a.name === "Deezer" || a.name === "Spotify" || a.name === "Apple Music" || a.name === "YouTube Music" || a.name === "SoundCloud")
+      );
+      if (music) {
+        return {
+          song: music.details || "Unknown Song",
+          artist: music.state || "Unknown Artist",
+          album: music.assets?.large_text || "",
+          album_art_url: music.assets?.large_image
+            ? music.assets.large_image.replace(/^mp:external\//, "https://media.discordapp.net/external/")
+            : undefined,
+          timestamps: music.timestamps || {},
+          service: music.name,
+        };
+      }
+    }
+    return null;
+  }
 
+  const music = getMusic(data);
+
+  useEffect(() => {
+    if (!music) return;
     if (
-      data?.spotify?.album_art_url &&
+      music.album_art_url &&
       (opts.get("color") === "true" || opts.get("c") === "t")
     ) {
       const img = new Image();
       img.crossOrigin = "anonymous";
-      img.src = data.spotify.album_art_url;
+      img.src = music.album_art_url;
 
       img.onload = () => {
         // get the average color of the image for the background
@@ -98,9 +122,9 @@ const Song = ({ discord_id }: SongProps) => {
         });
       };
     }
-  }, [data, opts, data?.spotify?.album_art_url]);
+  }, [music, opts, music?.album_art_url]);
 
-  if (!data || !data.spotify) {
+  if (!music) {
     return (
       <AnimatePresence mode="wait">
         <motion.div key="null"></motion.div>
@@ -110,8 +134,8 @@ const Song = ({ discord_id }: SongProps) => {
 
   const artist =
     opts.get("tr") === "t"
-      ? data.spotify.artist.split(";")[0]
-      : data.spotify.artist;
+      ? (music.artist || "").split(";")[0]
+      : music.artist;
 
   if (opts.get("type") === "text" || opts.get("t") === "text") {
     if (opts.get("f") === "t") {
@@ -124,7 +148,7 @@ const Song = ({ discord_id }: SongProps) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            {artist.replaceAll(";", ", ")} - {data.spotify.song}
+            {artist.replaceAll(";", ", ")} - {music.song}
           </motion.h1>
         </AnimatePresence>
       );
@@ -139,7 +163,7 @@ const Song = ({ discord_id }: SongProps) => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          {data.spotify.song} - {artist.replaceAll(";", ", ")}
+          {music.song} - {artist.replaceAll(";", ", ")}
         </motion.h1>
       </AnimatePresence>
     );
@@ -153,7 +177,7 @@ const Song = ({ discord_id }: SongProps) => {
 
   const borderWidth = opts.get("b") === "f" ? 0 : 2;
 
-  const { start, end } = data.spotify.timestamps;
+  const { start, end } = music.timestamps || {};
 
   return (
     <AnimatePresence mode="wait">
@@ -171,10 +195,10 @@ const Song = ({ discord_id }: SongProps) => {
         exit={{ opacity: 0 }}
       >
         <div className="flex-shrink-0">
-          {data.spotify.album_art_url && (
+          {music.album_art_url && (
             <NextImage
-              src={data.spotify.album_art_url}
-              alt={data.spotify.song}
+              src={music.album_art_url}
+              alt={music.song}
               height={172}
               width={172}
               className="aspect-square rounded-xl"
@@ -189,13 +213,13 @@ const Song = ({ discord_id }: SongProps) => {
         <div className="flex w-full flex-col justify-center space-y-4 overflow-hidden">
           <div>
             <p className="truncate text-5xl font-bold leading-normal text-white">
-              {data.spotify.song}
+              {music.song}
             </p>
             <p className="truncate text-3xl text-white">
               {artist.replaceAll(";", ", ")}
             </p>
           </div>
-          <ProgressBar start={start} end={end} />
+          {start && end ? <ProgressBar start={start} end={end} /> : null}
         </div>
       </motion.div>
     </AnimatePresence>
