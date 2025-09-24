@@ -1,12 +1,11 @@
-"use client";
-import type { Spotify } from "use-lanyard";
+
 
 import Image from "next/image";
 
 import { useEffect, useState } from "react";
 
 interface SongProps {
-  data: Spotify;
+  data: any;
   mouseX: number;
   mouseY: number;
 }

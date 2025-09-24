@@ -1,6 +1,5 @@
 "use client";
 
-import type { Snowflake } from "use-lanyard";
 
 // so it doesn't conflict with Image() constructor
 import { default as NextImage } from "next/image";
@@ -55,52 +54,66 @@ const brClasses = {
 };
 
 interface SongProps {
-  discord_id: Snowflake;
+  discord_id: string;
 }
 
 const Song = ({ discord_id }: SongProps) => {
-  const data = useThrottle(useLanyardWS(discord_id));
-
+  const data = useThrottle(useLanyardWS(discord_id as `${bigint}`));
   const opts = useSearchParams();
-
   const [backgroundRGB, setBackgroundRGB] = useState("0 0 0");
   const [borderColor, setBorderColor] = useState("rgba(38 38 38 / 1)");
 
+  // Helper: extract music activity from data
+  function getMusicActivity(data: any) {
+    if (!data) return null;
+    // Prefer Spotify if present
+    if (data.spotify) {
+      return { service: "Spotify", ...data.spotify };
+    }
+    // Otherwise, look for a music activity (type 2, e.g. Deezer)
+    if (Array.isArray(data.activities)) {
+      const music = data.activities.find(
+        (a: any) => a.type === 2 && (a.name === "Deezer" || a.name === "Spotify" || a.name === "Apple Music" || a.name === "YouTube Music" || a.name === "SoundCloud")
+      );
+      if (music) {
+        // Map Deezer/other activity to a common shape
+        return {
+          service: music.name,
+          song: music.details || "Unknown Song",
+          artist: music.state || "Unknown Artist",
+          album: music.assets?.large_text || "",
+          album_art_url: music.assets?.large_image
+            ? music.assets.large_image.replace(/^mp:external\//, "https://media.discordapp.net/external/")
+            : undefined,
+          timestamps: music.timestamps || {},
+        };
+      }
+    }
+    return null;
+  }
+
+  const music = getMusicActivity(data);
+
   useEffect(() => {
-    if (!data || !data.spotify) return;
-
-    if (
-      data?.spotify?.album_art_url &&
-      (opts.get("color") === "true" || opts.get("c") === "t")
-    ) {
-      const img = new Image();
+    if (!music || !music.album_art_url) return;
+    if (opts.get("color") === "true" || opts.get("c") === "t") {
+      const img = new window.Image();
       img.crossOrigin = "anonymous";
-      img.src = data.spotify.album_art_url;
-
+      img.src = music.album_art_url;
       img.onload = () => {
-        // get the average color of the image for the background
-        fac
-          .getColorAsync(img)
-          .then((color) => {
-            const rgb = `${color.value[0]} ${color.value[1]} ${color.value[2]}`;
-
-            setBackgroundRGB(rgb);
-          })
-          .catch((e) => {
-            console.error(e);
-          });
-
-        // get the dominant color of the image for the border
+        fac.getColorAsync(img).then((color) => {
+          const rgb = `${color.value[0]} ${color.value[1]} ${color.value[2]}`;
+          setBackgroundRGB(rgb);
+        }).catch((e) => { console.error(e); });
         fac.getColorAsync(img, { algorithm: "dominant" }).then((color) => {
           const rgb = `${color.value[0]} ${color.value[1]} ${color.value[2]}`;
-
           setBorderColor(`rgba(${rgb} / 40%)`);
         });
       };
     }
-  }, [data, opts, data?.spotify?.album_art_url]);
+  }, [music, opts, music?.album_art_url]);
 
-  if (!data || !data.spotify) {
+  if (!music) {
     return (
       <AnimatePresence mode="wait">
         <motion.div key="null"></motion.div>
@@ -108,10 +121,9 @@ const Song = ({ discord_id }: SongProps) => {
     );
   }
 
-  const artist =
-    opts.get("tr") === "t"
-      ? data.spotify.artist.split(";")[0]
-      : data.spotify.artist;
+  const artist = opts.get("tr") === "t"
+    ? (music.artist || "").split(";")[0]
+    : music.artist || "";
 
   if (opts.get("type") === "text" || opts.get("t") === "text") {
     if (opts.get("f") === "t") {
@@ -124,12 +136,11 @@ const Song = ({ discord_id }: SongProps) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            {artist.replaceAll(";", ", ")} - {data.spotify.song}
+            {artist.replaceAll(";", ", ")} - {music.song}
           </motion.h1>
         </AnimatePresence>
       );
     }
-
     return (
       <AnimatePresence mode="wait">
         <motion.h1
@@ -139,7 +150,7 @@ const Song = ({ discord_id }: SongProps) => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          {data.spotify.song} - {artist.replaceAll(";", ", ")}
+          {music.song} - {artist.replaceAll(";", ", ")}
         </motion.h1>
       </AnimatePresence>
     );
@@ -147,13 +158,9 @@ const Song = ({ discord_id }: SongProps) => {
 
   const opacity = opts.get("opacity") || opts.get("o") || 60;
   const backgroundColor = `rgba(${backgroundRGB} / ${opacity}%)`;
-
-  const borderRadius =
-    brClasses[(opts.get("br") || 50) as keyof typeof brClasses];
-
+  const borderRadius = brClasses[(opts.get("br") || 50) as keyof typeof brClasses];
   const borderWidth = opts.get("b") === "f" ? 0 : 2;
-
-  const { start, end } = data.spotify.timestamps;
+  const { start, end } = music.timestamps || {};
 
   return (
     <AnimatePresence mode="wait">
@@ -171,10 +178,10 @@ const Song = ({ discord_id }: SongProps) => {
         exit={{ opacity: 0 }}
       >
         <div className="flex-shrink-0">
-          {data.spotify.album_art_url && (
+          {music.album_art_url && (
             <NextImage
-              src={data.spotify.album_art_url}
-              alt={data.spotify.song}
+              src={music.album_art_url}
+              alt={music.song}
               height={172}
               width={172}
               className="aspect-square rounded-xl"
@@ -189,13 +196,14 @@ const Song = ({ discord_id }: SongProps) => {
         <div className="flex w-full flex-col justify-center space-y-4 overflow-hidden">
           <div>
             <p className="truncate text-5xl font-bold leading-normal text-white">
-              {data.spotify.song}
+              {music.song}
             </p>
             <p className="truncate text-3xl text-white">
               {artist.replaceAll(";", ", ")}
             </p>
+            <p className="text-lg text-neutral-400">{music.service}</p>
           </div>
-          <ProgressBar start={start} end={end} />
+          {start && end ? <ProgressBar start={start} end={end} /> : null}
         </div>
       </motion.div>
     </AnimatePresence>
