@@ -97,19 +97,21 @@ const Song = ({ discord_id }: SongProps) => {
   useEffect(() => {
     if (!music || !music.album_art_url) return;
     if (opts.get("color") === "true" || opts.get("c") === "t") {
-      const img = new window.Image();
-      img.crossOrigin = "anonymous";
-      img.src = music.album_art_url;
-      img.onload = () => {
-        fac.getColorAsync(img).then((color) => {
-          const rgb = `${color.value[0]} ${color.value[1]} ${color.value[2]}`;
-          setBackgroundRGB(rgb);
-        }).catch((e) => { console.error(e); });
-        fac.getColorAsync(img, { algorithm: "dominant" }).then((color) => {
-          const rgb = `${color.value[0]} ${color.value[1]} ${color.value[2]}`;
-          setBorderColor(`rgba(${rgb} / 40%)`);
-        });
-      };
+      if (typeof window !== "undefined") {
+        const img = new window.Image();
+        img.crossOrigin = "anonymous";
+        img.src = music.album_art_url;
+        img.onload = () => {
+          fac.getColorAsync(img).then((color) => {
+            const rgb = `${color.value[0]} ${color.value[1]} ${color.value[2]}`;
+            setBackgroundRGB(rgb);
+          }).catch((e) => { console.error(e); });
+          fac.getColorAsync(img, { algorithm: "dominant" }).then((color) => {
+            const rgb = `${color.value[0]} ${color.value[1]} ${color.value[2]}`;
+            setBorderColor(`rgba(${rgb} / 40%)`);
+          });
+        };
+      }
     }
   }, [music, opts, music?.album_art_url]);
 
